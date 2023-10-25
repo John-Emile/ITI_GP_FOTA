@@ -4,10 +4,10 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../src/Fls_program.c \
+../src/FLASH_Prog.c \
 ../src/GPIO_config.c \
 ../src/GPIO_program.c \
-../src/HexParser.c \
+../src/HEX_PARSE.c \
 ../src/MEXTI_program.c \
 ../src/MNVIC_program.c \
 ../src/MRCC_Program.c \
@@ -20,10 +20,10 @@ C_SRCS += \
 ../src/stm32f4xx_hal_msp.c 
 
 OBJS += \
-./src/Fls_program.o \
+./src/FLASH_Prog.o \
 ./src/GPIO_config.o \
 ./src/GPIO_program.o \
-./src/HexParser.o \
+./src/HEX_PARSE.o \
 ./src/MEXTI_program.o \
 ./src/MNVIC_program.o \
 ./src/MRCC_Program.o \
@@ -36,10 +36,10 @@ OBJS += \
 ./src/stm32f4xx_hal_msp.o 
 
 C_DEPS += \
-./src/Fls_program.d \
+./src/FLASH_Prog.d \
 ./src/GPIO_config.d \
 ./src/GPIO_program.d \
-./src/HexParser.d \
+./src/HEX_PARSE.d \
 ./src/MEXTI_program.d \
 ./src/MNVIC_program.d \
 ./src/MRCC_Program.d \

@@ -1,13 +1,11 @@
-#include <MCAL/Fls/Fls_interface.h>
+#include "../include/LIB/Bit_Math.h"
+#include "../include/LIB/STD_TYPES.h"
+#include <MCAL/RCC/MRCC_Interface.h>
 #include <MCAL/GPIO/GPIO_interface.h>
 #include <MCAL/MSysTick/MSTK_Interface.h>
-#include <MCAL/NVIC/MNVIC_interface.h>
-#include <MCAL/RCC/MRCC_Interface.h>
 #include <MCAL/USART/USART_interface.h>
-#include <App/HEXPARSER/HexParser.h>
-#include <MCAL/MEXTI/MEXTI_interface.h>
-#include <MCAL/SCB/SCB_interface.h>
-
+#include <MCAL/FLASH/FLASH_Interface.h>
+#include <App/HEX_Parser/HEX_PARSE.h>
 u8 u8_TimeoutFlag=0;
 u8 RecieveBuffer[100];
 u8 u8RecCounter=0;
@@ -22,9 +20,9 @@ void APP_voidTest()
 {
 	u8_TimeoutFlag=1;
 	//pointer to function =0x8004000
-	GPIO_writePinVal(GPIO_PIN_NUM_A1,GPIO_HIGH);
+	GPIO_writePinVal(GPIO_PIN_NUM_A0,GPIO_LOW);
 	//set the vector table offset to the first address in sector 1
-	MCAL_SCB_VTOR_SetValue(0x8004000);
+	SCB_VTOR=0x8004000;
 	//call for pointer to function
 	ADD_TO_CALL=*(APP_CALL*)0x8004004;// 4 offset for vect table (startupcode first address)
 	//call the app part
@@ -33,21 +31,19 @@ void APP_voidTest()
 }
 int main (void)
 {
-	tenuErrrorStatus L_u8RecStatus=0;
-
+	u8 L_u8RecStatus=ENOK;
 
 	MRCC_voidInit();
 	MRCC_Enable_Peripheral(RCC_AHB1,RCC_AHB1_GPIOB);
 	MRCC_Enable_Peripheral(RCC_AHB1,RCC_AHB1_GPIOA);
 	MRCC_Enable_Peripheral(RCC_APB2,RCC_APB2_USART1);
-	//MRCC_VoidEnablePeripherals(APB1_bus,0);//FDI
 
 	GPIO_init();
 	MUSART1_vidInit();
 	MSTK_voidInit();
 
 	MSTK_asyncDelayms(8000,APP_voidTest);//interval 15s
-
+	GPIO_writePinVal(GPIO_PIN_NUM_A0,GPIO_HIGH);
 	while(u8_TimeoutFlag == 0)
 	{
 
@@ -64,10 +60,10 @@ int main (void)
 
 				if(u8WriteReq==1)
 				{
-					HexParser_vEraseAppArea();
+					MFDI_voidEraseAppArea();
 					u8WriteReq=0;
 				}
-				HexParser_vParseData(RecieveBuffer);
+				APARSER_voidParseRecord(RecieveBuffer);
 				//send ok
 				//uart send ok
 				MUSART1_vidTransmitt("ok");
@@ -78,10 +74,12 @@ int main (void)
 				u8RecCounter++;
 			}
 
-			MSTK_asyncDelayms(8000,APP_voidTest);//interval 15s
+			if(RecieveBuffer[8]=='1')
+			{
+				MSTK_asyncDelayms(8000,APP_voidTest);//interval 15s
+			}
 
 		}
 
-	}
-	return 0;
+	}return 0;
 }

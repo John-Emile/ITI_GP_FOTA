@@ -35,6 +35,8 @@ void MSTK_voidDelayus (u32 A_u32Delayus);
 
 void MSTK_asyncDelayms (u32 A_u32Delayms,pf ptr);
 
+void MSTK_StopInterval(void);
+
 void MSYSTICK_CallBack(void(*ptr)(void));
 
 #endif /* MSTK_INTERFACE_H_ */
