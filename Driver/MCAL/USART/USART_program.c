@@ -9,9 +9,9 @@
 #include <LIB/STD_Types.h>
 #include <LIB/BIT_MATH.h>
 
-#include <USART/USART_private.h>
-#include <USART/USART_config.h>
-#include <USART/USART_interface.h>
+#include <MCAL/USART/USART_config.h>
+#include <MCAL/USART/USART_interface.h>
+#include <MCAL/USART/USART_private.h>
 
 
 pf USART1_Callback = NULL_PTR;
@@ -90,21 +90,28 @@ void MUSART1_vidInit(void)
 #else
 #error "Wrong USART Over_sample"
 #endif
+
+	/*Set UE bit to Enable USART*/
+		USART1->CR1.UE = 1 ;
+
+		/*Enable Receiver*/
+		USART1->CR1.RE = ENABLE;
 }
 
 
-void MUSART1_vidTransmitt(u8* Copy_u8Data,u8 Copy_u8Length)
+void MUSART1_vidTransmitt(u8* Copy_u8Data)
 {
-	u32 Local_Counter;
+	u32 Local_Counter=0;
 	/*Set UE bit to Enable USART*/
 	USART1->CR1.UE = 1 ;
 
 	/*Enable Transmitter*/
 	USART1->CR1.TE = ENABLE;
-	for(Local_Counter = 0 ; Local_Counter<= Copy_u8Length ; Local_Counter++)
+	while(Copy_u8Data[Local_Counter] != '\0')
 	{
 		USART1->DR = Copy_u8Data[Local_Counter];
 		while(!GET_BIT(USART1->SR,6));
+		Local_Counter++;
 	}
 }
 
@@ -116,31 +123,46 @@ void MUSART1_vidReceive(u8* Copy_u8Data)
 	/*Enable Receiver*/
 	USART1->CR1.RE = ENABLE;
 
-	while(!GET_BIT(USART1->SR,5));
+	while(!GET_BIT(USART1->SR,RXNE));
 	*Copy_u8Data = USART1->DR;
 }
 
+tenuErrrorStatus MUSART1_vidReceiveAsync(u8* Copy_u8Data)
+{
+	tenuErrrorStatus ReturnErrorstate=ENOK;
 
+	if(GET_BIT(USART1->SR,RXNE) == 1)
+	{
+		*Copy_u8Data = USART1->DR;
+		ReturnErrorstate=EOK;
+	}
+	else
+	{
+		ReturnErrorstate=ENOK;
+	}
+
+	return ReturnErrorstate;
+}
 
 void MUSART1_vidDisable(void)
 {
 	/*Clear UE bit to Disable USART*/
 	USART1->CR1.UE = 0 ;
-
 }
 
 void MUSART1_vidCallBack(pf ptr)
 {
+	/*Set UE to enable USART Read data buffer interrupt */
+	USART1->CR1.RXNEIE = 1 ;
+
 	USART1_Callback = ptr;
 }
 
-
+void __attribute__ ((weak, alias ("Default_Handler")))
 USART1_IRQHandler(void)
 {
-	if(USART1_Callback != NULL_PTR)
-	{
-		USART1_Callback();
-	}
+	USART1_Callback();
+	GET_BIT(USART1->SR,RXNE);
 }
 
 
