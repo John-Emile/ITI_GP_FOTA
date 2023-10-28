@@ -44,7 +44,7 @@ int main (void)
 	if(TransferFlag == 0)
 	{
 		MFDI_voidEraseSector(FLASH_SECTOR_ONE);
-		MFDI_voidMoveData(FLASH_SECTOR_TWO_OFFSET,FLASH_SECTOR_ONE_OFFSET,(8*1024));
+		MFDI_voidMoveData(FLASH_SECTOR_TWO_ADDRESS,FLASH_SECTOR_ONE_ADDRESS,(8*1024));
 		TransferFlag=1;
 	}
 
