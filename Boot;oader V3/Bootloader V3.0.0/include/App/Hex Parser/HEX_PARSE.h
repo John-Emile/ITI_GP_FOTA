@@ -17,9 +17,9 @@
 #define ASCII_VALUE_OF_ZERO	48
 
 /* Definition of possible records type in hex file */
-#define HEX_RECORD_TYPE_IS_DATA	'0'
+#define HEX_RECORD_TYPE_IS_DATA					'0'
 #define HEX_RECORD_TYPE_IS_HIGH_ADDRESS_RECORD	'4'
-#define HEX_RECORD_TYPE_IS_END_OF_FILE	'1'
+#define HEX_RECORD_TYPE_IS_END_OF_FILE			'1'
 
 
 /* Enumeration that holds the frame of the hex record */
@@ -38,9 +38,14 @@ typedef enum
 	HEX_FRAME_DATA_FIRST_BYTE_LOWER_HALF,
 	HEX_FRAME_DATA_SECOND_BYTE_UPPER_HALF,
 	HEX_FRAME_DATA_SECOND_BYTE_LOWER_HALF,
-
 }HEX_recordFrame;
 
+typedef enum
+{
+	HEX_RECORD_CHARACTER_COUNT_LENGTH = 2,
+	HEX_RECORD_ADDRESS_LENGTH = 4,
+	HEX_RECORD_TYPE_LENGTH = 2
+}Hex_recordFrameLengthInHalfBytes;
 
 /************************************************************************************
  * Service Name: APARSER_ParseAscii2Hex
@@ -68,10 +73,18 @@ void APARSER_voidParseRecord(u8*Copy_BufRecord);
 
 void APAESER_voidParseData(u8 *Copy_u8BufData);
 
+/****************************************************************************************
+ * Service Name: APARSER_voidMoveData
+ * Parameters (in): uint32 (Holds the source address)
+ * 					uint32 (Holds the destination address)
+ * 					uint16 (Holds the data length)
+ * Return value: None
+ * Description: Move data from a sector in flash memory to another sector in flash memory
+ ****************************************************************************************/
 
-<<<<<<<< Updated upstream:Bootloader V2/BootloaderV2.1.1/include/App/Hex Parser/HEX_PARSE.h
-========
 void APAESER_voidMoveData(u32 _sourceAddress,u32 _DestinationAddress, u16 _dataLength);
->>>>>>>> Stashed changes:Hex Parser/HEX_PARSE.h
+
+
+tenuErrrorStatus APARSER_checkSum(u8* a_data);
 
 #endif /* HEX_PARSER_HEX_PARSE_H_ */

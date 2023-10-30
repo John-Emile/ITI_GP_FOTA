@@ -15,10 +15,10 @@
 
 
 #include <App/Hex Parser/HEX_PARSE.h>
-#include <MCAL/Flash/FLASH_Interface.h>
+#include <MCAL/FLASH/FLASH_Interface.h>
 
 /* Global unsigned integer variable that holds that start of flash address */
-u32 FLASH_ADDRESS = 0x08000000;
+u32 FLASH_ADDRESS = 0;
 
 /* Global unsigned array of character variable that holds that data parsed */
 u16 DataBUF[100];
@@ -61,6 +61,7 @@ u8 APARSER_ParseAscii2Hex(u8 a_asciiValue)
 
 void APARSER_voidParseRecord(u8*Copy_BufRecord)
 {
+	u8 u8digit[4];
 	/* Check on record type */
 	switch(Copy_BufRecord[HEX_FRAME_RECORD_LOW_BYTE])
 	{
@@ -72,6 +73,16 @@ void APARSER_voidParseRecord(u8*Copy_BufRecord)
 
 	case HEX_RECORD_TYPE_IS_HIGH_ADDRESS_RECORD:
 		/*set high address part*/
+		u8digit[0]=APARSER_ParseAscii2Hex(Copy_BufRecord[HEX_FRAME_DATA_FIRST_BYTE_UPPER_HALF]);
+		u8digit[1]=APARSER_ParseAscii2Hex(Copy_BufRecord[HEX_FRAME_DATA_FIRST_BYTE_LOWER_HALF]);
+		u8digit[2]=APARSER_ParseAscii2Hex(Copy_BufRecord[HEX_FRAME_DATA_SECOND_BYTE_UPPER_HALF]);
+		u8digit[3]=APARSER_ParseAscii2Hex(Copy_BufRecord[HEX_FRAME_DATA_SECOND_BYTE_LOWER_HALF]);
+
+		/* Clear bits 15 down to 0 to insert low address */
+		FLASH_ADDRESS &= 0x00000000;
+
+		/* Insert the low address into the least significant 4 bytes */
+		FLASH_ADDRESS |= (u8digit[0]<<28) | (u8digit[1]<<24) | (u8digit[2]<<20) | (u8digit[3]<<16);
 		break;
 
 	case HEX_RECORD_TYPE_IS_END_OF_FILE:
@@ -155,13 +166,19 @@ void APAESER_voidParseData(u8 *Copy_u8BufData)
 	}
 
 	/* Write the data in the flash memory sector 1 */
-	MFDI_voidFlashWrite((FLASH_ADDRESS+FLASH_SECTOR_ONE_OFFSET),DataBUF,(l_charCount/2));
+	MFDI_voidFlashWrite((FLASH_ADDRESS+(FLASH_SECTOR_FIVE_OFFSET-FLASH_SECTOR_ONE_OFFSET)),DataBUF,(l_charCount/2));
 }
 
 
+/****************************************************************************************
+ * Service Name: APARSER_voidMoveData
+ * Parameters (in): uint32 (Holds the source address)
+ * 					uint32 (Holds the destination address)
+ * 					uint16 (Holds the data length)
+ * Return value: None
+ * Description: Move data from a sector in flash memory to another sector in flash memory
+ ****************************************************************************************/
 
-<<<<<<<< Updated upstream:Bootloader V2/BootloaderV2.1.1/src/HEX_PARSE.c
-========
 void APAESER_voidMoveData(u32 a_sourceAddress,u32 a_DestinationAddress, u16 a_dataLength)
 {
 
@@ -186,4 +203,90 @@ void APAESER_voidMoveData(u32 a_sourceAddress,u32 a_DestinationAddress, u16 a_da
 	}
 
 }
->>>>>>>> Stashed changes:Hex Parser/HEX_PARSE.c
+
+
+tenuErrrorStatus APARSER_checkSum(u8 *Copy_u8BufData)
+{
+	/* To return the status of the check sum operation */
+	tenuErrrorStatus l_status = ENOK;
+
+	/* local variable to hold the character count high byte */
+	u8 l_charCountHighByte = 0;
+
+	/* local variable to hold the character count low byte */
+	u8 l_charCountLowByte = 0;
+
+	/* local variable to hold the character count */
+	u8 l_charCount = 0;
+
+	/* To get the iteration size needed to get check sum byte as data is not constant */
+	u8 l_iteratorSize = 0;
+
+	/* To hold the sum of the record to be compared with checksum byte */
+	u16 l_sum = 0;
+
+	/*** Getting the character count ***/
+
+	/* Get the high byte */
+	l_charCountHighByte = APARSER_ParseAscii2Hex(Copy_u8BufData[HEX_FRAME_HIGH_BYTE_CHARACTER_COUNT]);
+
+	/* Get the low byte */
+	l_charCountLowByte = APARSER_ParseAscii2Hex(Copy_u8BufData[HEX_FRAME_LOW_BYTE_CHARACTER_COUNT]);
+
+	/* Get the character count */
+	l_charCount = (l_charCountHighByte << 4) | l_charCountLowByte;
+    //printf("l_charCount = %d\n",l_charCount);
+
+	/*** Get iterator size by half bytes ***/
+
+	/*
+	 * Get number of data bytes in decimal then multiplying by 2 as we work by half bytes (1 hex number)
+	 * Add the byte that holds the char count
+	 * Add the address bytes
+	 * Add the type of record
+	 * Now this variable hold the length of the record until the check sum byte
+	 */
+	l_iteratorSize = (l_charCount * 2) + HEX_RECORD_CHARACTER_COUNT_LENGTH + HEX_RECORD_ADDRESS_LENGTH + HEX_RECORD_TYPE_LENGTH;
+
+	/*
+	 * Start from the second halfword as we want to neglect the ':'
+	 * Iterate until the end of the data bytes
+	 * Increment by 1 bytes (2 Halfwords)
+	 */
+
+	for (int l_iterator = HEX_FRAME_HIGH_BYTE_CHARACTER_COUNT; l_iterator < l_iteratorSize; l_iterator+=2)
+	{
+		/* Accumulate the sum byte by byte */
+		l_sum += (APARSER_ParseAscii2Hex(Copy_u8BufData[l_iterator]) << 4) | APARSER_ParseAscii2Hex((Copy_u8BufData[l_iterator+1]));
+		//printf("l_iterator %d is %x\n",l_iterator,l_sum);
+	}
+
+	/*
+	 * Checksum is the 2s-complement of the sum of the number of bytes, plus the address plus the data
+	 * Add up the number of bytes, the address and all the data and discard any carry to give 8-bit total
+	 * Then invert each digit to give 1s-complement by XOR with 0xFF then add 1 to get the 2s-complement
+	 */
+	l_sum = (((l_sum & 0xFF) ^ 0xFF) + 1);
+    //printf("sum = %d\n",l_sum);
+
+	/* Get the checkSum byte */
+	int checkSumUpper = APARSER_ParseAscii2Hex(Copy_u8BufData[l_iteratorSize+1]);
+	int checkSumLower = APARSER_ParseAscii2Hex(Copy_u8BufData[l_iteratorSize+2]);
+	int checkSum = 0;
+	checkSum = ( checkSumUpper << 4) | checkSumLower ;
+
+    //printf("checkSum = %d\n",l_sum);
+
+
+	/* Compare it with the sum calculated */
+	if ((checkSum & 0xFF) == (l_sum& 0xFF))
+	{
+		l_status = EOK;
+	}
+	else
+	{
+		l_status = ENOK;
+	}
+
+	return l_status;
+}
