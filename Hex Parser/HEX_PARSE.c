@@ -192,3 +192,90 @@ void APAESER_voidMoveData(u32 a_sourceAddress,u32 a_DestinationAddress, u16 a_da
 	}
 
 }
+
+
+u8 APARSER_checkSum(u8 *Copy_u8BufData)
+{
+	/* To return the status of the check sum operation */
+	u8 l_status = 0;
+
+	/* local variable to hold the character count high byte */
+	u8 l_charCountHighByte = 0;
+
+	/* local variable to hold the character count low byte */
+	u8 l_charCountLowByte = 0;
+
+	/* local variable to hold the character count */
+	u8 l_charCount = 0;
+
+	/* To get the iteration size needed to get check sum byte as data is not constant */
+	u8 l_iteratorSize = 0;
+
+	/* To hold the sum of the record to be compared with checksum byte */
+	u16 l_sum = 0;
+
+	/*** Getting the character count ***/
+
+	/* Get the high byte */
+	l_charCountHighByte = APARSER_ParseAscii2Hex(Copy_u8BufData[1]);
+
+	/* Get the low byte */
+	l_charCountLowByte = APARSER_ParseAscii2Hex(Copy_u8BufData[2]);
+
+	/* Get the character count */
+	l_charCount = (l_charCountHighByte << 4) | l_charCountLowByte;
+    //printf("l_charCount = %d\n",l_charCount);
+
+	/*** Get iterator size by half bytes ***/
+
+	/*
+	 * Get number of data bytes in decimal then multiplying by 2 as we work by half bytes (1 hex number)
+	 * Add the byte that holds the char count
+	 * Add the address bytes
+	 * Add the type of record
+	 * Now this variable hold the length of the record until the check sum byte
+	 */
+	l_iteratorSize = (l_charCount * 2) + 2 + 4 + 2;
+
+	/*
+	 * Start from the second halfword as we want to neglect the ':'
+	 * Iterate until the end of the data bytes
+	 * Increment by 1 bytes (2 Halfwords)
+	 */
+
+	for (int l_iterator = 1; l_iterator < l_iteratorSize; l_iterator+=2)
+	{
+		/* Accumulate the sum byte by byte */
+		l_sum += (APARSER_ParseAscii2Hex(Copy_u8BufData[l_iterator]) << 4) | APARSER_ParseAscii2Hex((Copy_u8BufData[l_iterator+1]));;
+		//printf("l_iterator %d is %x\n",l_iterator,l_sum);
+	}
+
+	/*
+	 * Checksum is the 2s-complement of the sum of the number of bytes, plus the address plus the data
+	 * Add up the number of bytes, the address and all the data and discard any carry to give 8-bit total
+	 * Then invert each digit to give 1s-complement by XOR with 0xFF then add 1 to get the 2s-complement
+	 */
+	l_sum = (((l_sum & 0xFF) ^ 0xFF) + 1);
+    //printf("sum = %d\n",l_sum);
+
+	/* Get the checkSum byte */
+	int checkSumUpper = APARSER_ParseAscii2Hex(Copy_u8BufData[l_iteratorSize+1]);
+	int checkSumLower = APARSER_ParseAscii2Hex(Copy_u8BufData[l_iteratorSize+2]);
+	int checkSum = 0;
+	checkSum = ( checkSumUpper << 4) | checkSumLower ;
+
+    //printf("checkSum = %d\n",l_sum);
+
+
+	/* Compare it with the sum calculated */
+	if (checkSum == l_sum)
+	{
+		l_status = 1;
+	}
+	else
+	{
+		l_status = 0;
+	}
+
+	return l_status;
+}

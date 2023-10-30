@@ -38,9 +38,14 @@ typedef enum
 	HEX_FRAME_DATA_FIRST_BYTE_LOWER_HALF,
 	HEX_FRAME_DATA_SECOND_BYTE_UPPER_HALF,
 	HEX_FRAME_DATA_SECOND_BYTE_LOWER_HALF,
-
 }HEX_recordFrame;
 
+typedef enum
+{
+	HEX_RECORD_CHARACTER_COUNT_LENGTH = 2,
+	HEX_RECORD_ADDRESS_LENGTH = 4,
+	HEX_RECORD_TYPE_LENGTH = 2
+}Hex_recordFrameLengthInHalfBytes;
 
 /************************************************************************************
  * Service Name: APARSER_ParseAscii2Hex
@@ -78,5 +83,8 @@ void APAESER_voidParseData(u8 *Copy_u8BufData);
  ****************************************************************************************/
 
 void APAESER_voidMoveData(u32 _sourceAddress,u32 _DestinationAddress, u16 _dataLength);
+
+
+u8 APARSER_checkSum(u8* a_data);
 
 #endif /* HEX_PARSER_HEX_PARSE_H_ */
