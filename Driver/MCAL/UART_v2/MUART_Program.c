@@ -21,10 +21,12 @@ void MUART_voidInit(void)
 	/*if over sample_16 so over_8=0, When OVER8=0, the fractional part is coded on 4 bits*/
 #if UART_OVER8==UART_OVRSMPL_16
 	UART1->CR1.OVER8=LOW;
+	UART1->USART_BRR=0;
 	UART1->USART_BRR |= ( (DIV_MANTISSA_9600_OVER8_0) << 4 ) | (DIV_FRACTION_9600_OVER8_0);
 	/*if over sample_8 so over_8=1, When OVER8=1, the fractional part is coded on 3 bits*/
 #elif UART_OVER8==UART_OVRSMPL_8
 	UART1->CR1.OVER8=HIGH;
+	UART1->USART_BRR=0;
 	UART1->USART_BRR |= ( (DIV_MANTISSA_9600_OVER8_0) <<4 ) | (DIV_FRACTION_9600_OVER8_0 & (0x7));
 #endif
 #endif
@@ -52,7 +54,8 @@ void MUART_voidInit(void)
 
 	/*To select the stop bits*/
 #if UART_STOP_BITS==UART_1_STOP_BIT
-	UART1->USART_CR2 |= (ONE_STOP <<12);
+	CLR_BIT(UART1->USART_CR2,12);
+	CLR_BIT(UART1->USART_CR2,13);
 #elif UART_STOP_BITS==UART_2_STOP_BIT
 	UART1->USART_CR2 |= (TWO_STOP << 12);
 #endif
@@ -72,7 +75,7 @@ void MUART_voidInit(void)
 #endif
 
 	/*To enable the UART*/
-		UART1->CR1.UE=HIGH;
+	UART1->CR1.UE=HIGH;
 	/*To enable the transmitter*/
 	UART1->CR1.TE=HIGH;
 	/*To enable the receiver*/
@@ -233,53 +236,70 @@ void MUART_voidInit(void)
 void MUART_Transmit(uint8* u8DataCPY,uint8 u8UART_Number_CPY)
 {
 
-	uint8 u8i=0;
+	uint32 u32i=0;
 
 	if(u8UART_Number_CPY==UART_1)
 	{
-	while(u8DataCPY[u8i] !='/0')
+	while(u8DataCPY[u32i] !='\0')
 	 {
-		 UART1->USART_DR=u8DataCPY[u8i];
+		 UART1->USART_DR=u8DataCPY[u32i];
 		 // wait till the  Transmission completes//
 		 while(GET_BIT(UART1->USART_SR,T_COMPLETE)==LOW){}
-		 u8i++;
+		 u32i++;
 	 }
 	}
+
 	else if(u8UART_Number_CPY==UART_2)
 	{
-		while(u8DataCPY[u8i] !='/0')
+		while(u8DataCPY[u32i] !='\0')
 		{
-			UART2->USART_DR=u8DataCPY[u8i];
+			UART2->USART_DR=u8DataCPY[u32i];
 			// wait till the  Transmission completes//
 			while(GET_BIT(UART2->USART_SR,T_COMPLETE)==LOW){}
-			u8i++;
+			u32i++;
 		}
 	}
+
 	else if(u8UART_Number_CPY==UART_6)
 	{
-		while(u8DataCPY[u8i] !='/0')
+		while(u8DataCPY[u32i] !='\0')
 		{
-			UART6->USART_DR=u8DataCPY[u8i];
+			UART6->USART_DR=u8DataCPY[u32i];
 			// wait till the  Transmission completes//
 			while(GET_BIT(UART6->USART_SR,T_COMPLETE)==LOW){}
-			u8i++;
+			u32i++;
 		}
 	}
 
 }
 
-void MUART_Recieve(uint8* u8DataCPY)
+void MUART_Recieve(uint8* u8DataCPY,uint8 u8UART_Number_CPY)
 {
-	while(GET_BIT(UART1->USART_SR,READ_REG_NOT_EMPTY)==0);
+	if(u8UART_Number_CPY==UART_1)
+	{
+		while(GET_BIT(UART1->USART_SR,READ_REG_NOT_EMPTY)==0);
 		*u8DataCPY = UART1->USART_DR;
+	}
+	else if(u8UART_Number_CPY==UART_2)
+	{
+		while(GET_BIT(UART2->USART_SR,READ_REG_NOT_EMPTY)==0);
+		*u8DataCPY = UART2->USART_DR;
+	}
+	else if(u8UART_Number_CPY==UART_6)
+	{
+		while(GET_BIT(UART6->USART_SR,READ_REG_NOT_EMPTY)==0);
+		*u8DataCPY = UART6->USART_DR;
+	}
+
 }
 
 uint8 MUART_RecieveAsynch(uint8 *u8Data_CPY,uint8 u8UART_Number_CPY)
 {
 	uint8 u8statuesLOCAL=1; // a variable to check if there is anything received by UART or not//
-
+	/*Check which UART to receive from*/
 	if(u8UART_Number_CPY==UART_1)
 	{
+		//Check if received data is ready to be read//
 	if(GET_BIT(UART1->USART_SR,READ_REG_NOT_EMPTY)==HIGH)
 	{
 		*u8Data_CPY=UART1->USART_DR; /* put the data in the data register in the

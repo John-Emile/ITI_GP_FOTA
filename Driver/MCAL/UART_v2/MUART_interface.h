@@ -40,7 +40,8 @@ typedef enum
 
 void MUART_voidInit(void);
 void MUART_Transmit(uint8* u8DataCPY, uint8 u8UART_Number_CPY);
-void MUART_Recieve(uint8* u8DataCPY);
+void MUART_SendByte(uint8 u8Data);
+void MUART_Recieve(uint8* u8DataCPY,uint8 u8UART_Number_CPY);
 uint8 MUART_RecieveAsynch(uint8 *u8Data_CPY,uint8 u8UART_Number_CPY);
 void MUART_voidCallBack(void(*ptr)(void));
 
