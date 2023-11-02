@@ -232,6 +232,28 @@ void MUART_voidInit(void)
 #endif
 
 }
+void MUART_TransmitByte(uint8 u8Data,uint8 u8UART_Number_CPY)
+{
+	if(u8UART_Number_CPY==UART_1)
+	{
+		UART1->USART_DR=u8Data;
+		// wait till the  Transmission completes//
+		while(GET_BIT(UART1->USART_SR,T_COMPLETE)==LOW){}
+	}
+	else if(u8UART_Number_CPY==UART_2)
+		{
+			UART2->USART_DR=u8Data;
+			// wait till the  Transmission completes//
+			while(GET_BIT(UART2->USART_SR,T_COMPLETE)==LOW){}
+		}
+	else if(u8UART_Number_CPY==UART_6)
+		{
+			UART6->USART_DR=u8Data;
+			// wait till the  Transmission completes//
+			while(GET_BIT(UART6->USART_SR,T_COMPLETE)==LOW){}
+		}
+
+}
 
 void MUART_Transmit(uint8* u8DataCPY,uint8 u8UART_Number_CPY)
 {
