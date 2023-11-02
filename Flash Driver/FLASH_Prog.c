@@ -35,6 +35,7 @@ void MFDI_voidEraseSector(u8 A_u8SectorNumber)
 	}
 	else
 	{
+<<<<<<< Updated upstream:Flash Driver/FLASH_Prog.c
 		//wait busy flag
 		while(GET_BIT(MFDI->SR,16)==1);
 		//check if authorized for configuration
@@ -61,6 +62,41 @@ void MFDI_voidEraseSector(u8 A_u8SectorNumber)
 
 		//Deactivate sector erase
 		CLR_BIT(MFDI->CR,1);
+=======
+		/* Wait busy flag */
+		while(GET_BIT(MFDI->SR,BSY)==1);
+		
+		/* Check if authorized for configuration */
+		if(GET_BIT(MFDI->CR,LOCK)==1)
+		{
+			/* Unlock sequence */
+			MFDI->KEYR=MFDI_KEY1;
+			MFDI->KEYR=MFDI_KEY2;
+		}
+
+		/*
+		 * Selecting the sector erase
+		 * Clearing selection bits[bits 3:5]
+		 * Selecting sector
+		 */
+		MFDI->CR &= SELECT_SECTOR_MASK;
+		MFDI->CR |= A_u8SectorNumber<<3;
+
+		/* Configure as sector erase */
+		SET_BIT(MFDI->CR,SER);
+		
+		/* Set start bit */
+		SET_BIT(MFDI->CR,STRT);
+
+		/* Wait busy flag */
+		while(GET_BIT(MFDI->SR,OPERR)==1);
+
+		/* Set end of operation flag bit */
+		SET_BIT(MFDI->SR,EOP);
+
+		/* Deactivate sector erase */
+		CLR_BIT(MFDI->CR,SER);
+>>>>>>> Stashed changes:Bootloader V3/Bootloader V3.0.1/src/FLASH_Prog.c
 	}
 }
 
@@ -73,18 +109,28 @@ void MFDI_voidEraseSector(u8 A_u8SectorNumber)
  * Description: Write in specific address in flash memory.
  ************************************************************************************/
 
-void MFDI_voidFlashWrite(u32 A_u32Address,u16*A_ptrData,u8 A_u8DataLength)//u16 to access half word
+void MFDI_voidFlashWrite(u32 A_u32Address,u16*A_ptrData,u8 A_u8DataLength) /*u16 to access half word */
 {
 	u8 L_u8iterator;
+<<<<<<< Updated upstream:Flash Driver/FLASH_Prog.c
 	//wait busy flag
 	while(GET_BIT(MFDI->SR,16)==1);
 	//check if authorized for configuration
 	if(GET_BIT(MFDI->CR,31)==1)
+=======
+	
+	/* Wait busy flag */
+	while(GET_BIT(MFDI->SR,BSY)==1);
+	
+	/* Check if authorized for configuration */
+	if(GET_BIT(MFDI->CR,LOCK)==1)
+>>>>>>> Stashed changes:Bootloader V3/Bootloader V3.0.1/src/FLASH_Prog.c
 	{
-		//lock sequence
+		/* lock sequence */
 		MFDI->KEYR=MFDI_KEY1;
 		MFDI->KEYR=MFDI_KEY2;
 	}
+<<<<<<< Updated upstream:Flash Driver/FLASH_Prog.c
 	MFDI->CR&= 0xFFFFFCFF;
 	MFDI->CR|=WRITE_HALF_WORD<<8;
 
@@ -92,10 +138,21 @@ void MFDI_voidFlashWrite(u32 A_u32Address,u16*A_ptrData,u8 A_u8DataLength)//u16 
 	{
 		//activate programming flash
 		SET_BIT(MFDI->CR,0);
+=======
+
+	MFDI->CR &= SELECT_WORD_SIZE_MASK;
+	MFDI->CR |= WRITE_HALF_WORD<<8;
+
+	for(L_u8iterator=0;L_u8iterator<A_u8DataLength;L_u8iterator++)
+	{
+		/* Activate programming flash */
+		SET_BIT(MFDI->CR,PG);
+>>>>>>> Stashed changes:Bootloader V3/Bootloader V3.0.1/src/FLASH_Prog.c
 
 		*((volatile u16*)A_u32Address)=A_ptrData[L_u8iterator];
 		A_u32Address+=2;
 
+<<<<<<< Updated upstream:Flash Driver/FLASH_Prog.c
 		//wait busy flag
 		while(GET_BIT(MFDI->SR,16)==1);
 
@@ -104,6 +161,16 @@ void MFDI_voidFlashWrite(u32 A_u32Address,u16*A_ptrData,u8 A_u8DataLength)//u16 
 
 		//deactivate programming flash
 		CLR_BIT(MFDI->CR,0);
+=======
+		/* Wait busy flag */
+		while(GET_BIT(MFDI->SR,BSY)==1);
+
+		/* Set end of operation flag bit */
+		SET_BIT(MFDI->SR,EOP);
+
+		/* Deactivate programming flash */
+		CLR_BIT(MFDI->CR,PG);
+>>>>>>> Stashed changes:Bootloader V3/Bootloader V3.0.1/src/FLASH_Prog.c
 
 	}
 
@@ -121,8 +188,13 @@ void MFDI_voidEraseAppArea(void)
 {
 	u8 L_u8iterator;
 
+<<<<<<< Updated upstream:Flash Driver/FLASH_Prog.c
 	//sector 0 is the boot loader
 	for(L_u8iterator=1;L_u8iterator<6;L_u8iterator++)
+=======
+	/* Skip seector 0 as it is the bootloader */
+	for(L_u8iterator=_startSector ; L_u8iterator<=_endSector ; L_u8iterator++)
+>>>>>>> Stashed changes:Bootloader V3/Bootloader V3.0.1/src/FLASH_Prog.c
 	{
 		MFDI_voidEraseSector(L_u8iterator);
 	}
