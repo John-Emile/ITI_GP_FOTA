@@ -1,0 +1,9 @@
+{
+    "files": [
+        "Login_Screen.qml",
+        "main.py",
+        "main.qml",
+        "Screen01_copy.qml",
+        "Screen01_progress.qml"
+    ]
+}
