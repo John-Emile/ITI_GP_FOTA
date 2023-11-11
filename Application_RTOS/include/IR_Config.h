@@ -10,11 +10,11 @@
 
 #include"MGPIO_interface.h"
 
-#define IR_RIGHT_PORT                             PORTA
-#define IR_RIGHT_PIN                              PIN8
+#define IR_RIGHT_PORT                             PORTB
+#define IR_RIGHT_PIN                              PIN14
 
 #define IR_LEFT_PORT                              PORTA
-#define IR_LEFT_PIN                               PIN9
+#define IR_LEFT_PIN                               PIN8
 
 
 

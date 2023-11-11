@@ -8,8 +8,8 @@
 #ifndef IR_INTERFACE_H_
 #define IR_INTERFACE_H_
 
-#define IR_BLACK          1
-#define IR_WHITE          0
+#define IR_BLACK          0
+#define IR_WHITE          1
 
 void HIR_VoidInit(void);
 uint8 HIR_RightState(void);
