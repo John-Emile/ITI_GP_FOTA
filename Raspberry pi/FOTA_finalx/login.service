@@ -1,0 +1,12 @@
+[Unit]
+Description=My Custom Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/ziadgomaa/Desktop/application/start.sh 
+Restart=always
+User=ziadgomaa
+
+[Install]
+WantedBy=multi-user.target
